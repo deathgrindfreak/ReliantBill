@@ -1,15 +1,26 @@
+import sys
 import pandas as pd
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
 
-#import Reliant bill and Master ESID list into pandas
-billdf = pd.read_excel(r'C:\Users\bbell\OneDrive - CrownQuest Operating\Documents\Electric Bills\20190925_12.23.57_CROWNQUESTOPERATINGCOLLC_SMRY.xlsx', sheet_name='Final-Draft', header=0, skiprows=9, skipfooter=18, usecols=['ESID', 'FACILITY ID','START BILL PERIOD', 'END BILL PERIOD', 'PREV MET READ', 'CUR MET READ', 'KWH', 'KW', 'Total Due'])
-meterdf = pd.read_excel(r'C:\Users\bbell\OneDrive - CrownQuest Operating\Documents\Electric Bills\Master ESID Sheet.xlsx')
+# To make the script more general, accept the filenames as script arguments (e.g. python reliant_script.py bill.xlsx meter.xlsx)
+_, BILL_DF_PATH, METER_DF_PATH = sys.argv
 
-#convert ESID's to float
-billdf['ESID'] = billdf['ESID'].astype(float)
-meterdf['ESID'] = meterdf['ESID'].astype(float)
+#import Reliant bill and Master ESID list into pandas
+billdf = pd.read_excel(BILL_DF_PATH,
+                       sheet_name='Final-Draft',
+                       header=0,
+                       skiprows=9,
+                       skipfooter=18,
+                       usecols=[
+                           'ESID', 'FACILITY ID', 'START BILL PERIOD',
+                           'END BILL PERIOD', 'PREV MET READ', 'CUR MET READ',
+                           'KWH', 'KW', 'Total Due'
+                       ],
+                       dtype={ 'ESID': float })
+
+meterdf = pd.read_excel(METER_DF_PATH, dtype={ 'ESID': float })
 
 #find ESID's that are not on Reliant's bill
 nobilldf = mergedf.loc[mergedf['_merge'] == 'left_only'].copy()
@@ -28,7 +39,6 @@ duplicatedf['ESID'] = duplicatedf['ESID'].astype(float)
 #filter out all dupliacates not on the master ESID list
 duplicatemergedf = pd.merge(duplicatedf, meterdf, how='inner', indicator=True)
 duplicatemergedf.sort_values(by=['START BILL PERIOD'])
-
 
 #find ESID's from duplicate list that have conflicting start/end dates and start/end meter readings
 meterlist = np.array(meterdf['ESID'])
