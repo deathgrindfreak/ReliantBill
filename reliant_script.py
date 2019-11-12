@@ -17,10 +17,9 @@ billdf = pd.read_excel(BILL_DF_PATH,
                            'ESID', 'FACILITY ID', 'START BILL PERIOD',
                            'END BILL PERIOD', 'PREV MET READ', 'CUR MET READ',
                            'KWH', 'KW', 'Total Due'
-                       ],
-                       dtype={ 'ESID': float })
+                       ])
 
-meterdf = pd.read_excel(METER_DF_PATH, dtype={ 'ESID': float })
+meterdf = pd.read_excel(METER_DF_PATH)
 
 #find ESID's that are not on Reliant's bill
 nobilldf = mergedf.loc[mergedf['_merge'] == 'left_only'].copy()
