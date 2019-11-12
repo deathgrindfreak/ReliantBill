@@ -17,19 +17,13 @@ billdf = pd.read_excel(BILL_DF_PATH,
                            'ESID', 'FACILITY ID', 'START BILL PERIOD',
                            'END BILL PERIOD', 'PREV MET READ', 'CUR MET READ',
                            'KWH', 'KW', 'Total Due'
-                       ])
+                       ], dtype={ 'ESID': str })
 
-meterdf = pd.read_excel(METER_DF_PATH)
-
-#find ESID's that are not on Reliant's bill
-nobilldf = mergedf.loc[mergedf['_merge'] == 'left_only'].copy()
-
-#find ESID's that are not on the Master list
-nomasterdf = mergedf.loc[mergedf['_merge'] == 'right_only'].copy()
+meterdf = pd.read_excel(METER_DF_PATH, dtype={ 'ESID': str })
 
 #print to excel list of ESID's not on the Master list
-nomasterdf['ESID'] = nomasterdf['ESID'].map('{:.0f}'.format)
-nomasterdf.to_excel('wrongbill.xlsx')
+esidSet = set(billdf.ESID)
+meterdf[~meterdf.ESID.isin(esidSet)].to_excel('wrongbill.xlsx')
 
 #find duplicate ESID's on the Reliant Bill
 duplicatedf = billdf[billdf.duplicated(['ESID'], keep=False)].copy()
