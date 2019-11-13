@@ -17,37 +17,26 @@ billdf = pd.read_excel(BILL_DF_PATH,
                            'ESID', 'FACILITY ID', 'START BILL PERIOD',
                            'END BILL PERIOD', 'PREV MET READ', 'CUR MET READ',
                            'KWH', 'KW', 'Total Due'
-                       ], dtype={ 'ESID': str })
+                       ],
+                       dtype={'ESID': str})
 
-meterdf = pd.read_excel(METER_DF_PATH, dtype={ 'ESID': str })
+meterdf = pd.read_excel(METER_DF_PATH, dtype={'ESID': str})
 
 #print to excel list of ESID's not on the Master list
 esidSet = set(billdf.ESID)
-meterdf[~meterdf.ESID.isin(esidSet)].to_excel('wrongbill.xlsx')
+meterdf[~meterdf.ESID.isin(esidSet)].to_excel('wrongBill.xlsx')
+
+# meters not in the master ESID list
+meterEsidSet = set(meterdf.ESID)
+billdf[~billdf.ESID.isin(meterEsidSet)].to_excel('wrongMeter.xlsx')
 
 #find duplicate ESID's on the Reliant Bill
-duplicatedf = billdf[billdf.duplicated(['ESID'], keep=False)].copy()
-duplicatedf['ESID'] = duplicatedf['ESID'].astype(float)
+correctBills = billdf[billdf.ESID.isin(meterEsidSet)]
+duplicatedf = correctBills[correctBills.duplicated(['ESID'], keep=False)].copy()
 
-#filter out all dupliacates not on the master ESID list
-duplicatemergedf = pd.merge(duplicatedf, meterdf, how='inner', indicator=True)
-duplicatemergedf.sort_values(by=['START BILL PERIOD'])
-
-#find ESID's from duplicate list that have conflicting start/end dates and start/end meter readings
-meterlist = np.array(meterdf['ESID'])
-
-for meterlist in duplicatemergedf['ESID']:  #don't exactly understand how you can loop an array into a dataframe column
-    slicedf = duplicatemergedf.loc[duplicatemergedf['ESID'] == meterlist].copy()  #don't quite understand how this isolates each ESID
-    slicedf.sort_values(by=['START BILL PERIOD'])
-    if slicedf.iat[0,3] >= slicedf.iat[1,2] and slicedf.iat[0,5] > slicedf.iat[1,4]:
-            #slicedf.drop_duplicates(subset="ESID", keep='first', inplace=True)
-            #slicedf.to_excel('duplicates.xlsx')
-            #evenslicedf = slicedf.iloc[::4,:].copy()
-            #newevenslicedf = [evenslicedf.drop_duplicates(subset="ESID", keep='first', inplace=True)].copy()
-            #oddslicedf = slicedf.iloc[1::4,:]
-            #mergeslicedf = pd.merge(evenslicedf, oddslicedf, how='outer')
-            #print(newevenslicedf)
-            #newmeterlist = meterlist[::2]
-            print(meterlist)
-
-#This outputs a dataframe with 4 rows per ESID, it should only output 2 rows (2 months worth of billing). However I try to slice the result, I either get a "None" output or I get 4 rows of data per ESID.
+for esid in set(duplicatedf.ESID):
+    dups = duplicatedf[duplicatedf.ESID == esid]
+    d = len(dups.index)
+    for idx in ['START BILL PERIOD', 'END BILL PERIOD', 'PREV MET READ', 'CUR MET READ']:
+        if len(dups[idx].unique()) == d:
+            print(dups)
